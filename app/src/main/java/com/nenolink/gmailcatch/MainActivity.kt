@@ -11,11 +11,14 @@ import android.os.Bundle
 import android.provider.Settings
 import android.view.ViewGroup
 import android.widget.*
+import androidx.core.app.NotificationManagerCompat
 
 class MainActivity : Activity() {
     private lateinit var settingsRepo: SettingsRepository
     private lateinit var status: TextView
     private lateinit var sender: EditText
+    private lateinit var subjectPrefix: EditText
+    private lateinit var subjectRequired: CheckBox
     private lateinit var enabled: Switch
     private lateinit var log: TextView
 
@@ -42,15 +45,27 @@ class MainActivity : Activity() {
             setOnCheckedChangeListener { _, checked -> settingsRepo.enabled = checked }
         }
         sender = EditText(this).apply {
-            hint = "VIP-afsender, fx navn@example.com"
+            hint = "Afsender, fx noreply@em.lilt.com"
             setText(settingsRepo.vipSender)
             inputType = android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
         }
+        subjectRequired = CheckBox(this).apply {
+            text = "Kræv emne-prefix"
+            isChecked = settingsRepo.subjectRequired
+        }
+        subjectPrefix = EditText(this).apply {
+            hint = "Emnet begynder med"
+            setText(settingsRepo.subjectPrefix)
+            inputType = android.text.InputType.TYPE_CLASS_TEXT
+        }
         val save = Button(this).apply {
-            text = "GEM VIP-AFSENDER"
+            text = "GEM MAILREGEL"
             setOnClickListener {
                 settingsRepo.vipSender = sender.text.toString()
-                Toast.makeText(this@MainActivity, "VIP-afsender gemt", Toast.LENGTH_SHORT).show()
+                settingsRepo.subjectPrefix = subjectPrefix.text.toString()
+                settingsRepo.subjectRequired = subjectRequired.isChecked
+                refreshStatus()
+                Toast.makeText(this@MainActivity, "Mailregel gemt", Toast.LENGTH_SHORT).show()
             }
         }
         val notificationAccess = Button(this).apply {
@@ -87,7 +102,7 @@ class MainActivity : Activity() {
         }
         log = TextView(this).apply { textSize = 13f }
 
-        listOf(title, intro, enabled, sender, save, notificationAccess, fullScreen, test, status, logTitle, log).forEach { view ->
+        listOf(title, intro, enabled, sender, subjectRequired, subjectPrefix, save, notificationAccess, fullScreen, test, status, logTitle, log).forEach { view ->
             root.addView(view, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
                 topMargin = if (view === title) 0 else 20
             })
@@ -102,7 +117,7 @@ class MainActivity : Activity() {
     }
 
     private fun refreshStatus() {
-        val listenerEnabled = NotificationManager.getEnabledListenerPackages(this).contains(packageName)
+        val listenerEnabled = NotificationManagerCompat.getEnabledListenerPackages(this).contains(packageName)
         val fullScreenAllowed = if (Build.VERSION.SDK_INT >= 34) {
             getSystemService(NotificationManager::class.java).canUseFullScreenIntent()
         } else true
@@ -110,7 +125,8 @@ class MainActivity : Activity() {
             append("Status\n")
             append(if (listenerEnabled) "✓ Notifikationsadgang\n" else "✗ Notifikationsadgang mangler\n")
             append(if (fullScreenAllowed) "✓ Full-screen alarm tilladt\n" else "✗ Full-screen alarm kræver adgang\n")
-            append(if (settingsRepo.vipSender.isBlank()) "✗ VIP-afsender mangler" else "✓ VIP-afsender konfigureret")
+            append(if (settingsRepo.vipSender.isBlank()) "✗ Afsender mangler\n" else "✓ Afsender konfigureret\n")
+            append(if (settingsRepo.subjectRequired && settingsRepo.subjectPrefix.isBlank()) "✗ Emne-prefix mangler" else "✓ Emneregel konfigureret")
         }
         log.text = EventLog.read(this)
     }
