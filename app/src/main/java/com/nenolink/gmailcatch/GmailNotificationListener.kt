@@ -13,26 +13,41 @@ class GmailNotificationListener : NotificationListenerService() {
         val settings = SettingsRepository(this)
         if (!settings.enabled || settings.vipSender.isBlank()) return
 
-        val candidates = NotificationTextExtractor.extract(sbn.notification)
-        val matched = VipMatcher.matches(settings.vipSender, candidates)
-        EventLog.add(this, if (matched) "Gmail-notifikation matchede VIP" else "Gmail-notifikation uden VIP-match")
-        if (!matched) return
+        val extracted = NotificationTextExtractor.extract(sbn.notification)
+        val result = VipMatcher.evaluate(
+            settings.vipSender,
+            settings.subjectPrefix,
+            settings.subjectRequired,
+            extracted.candidates
+        )
+        EventLog.add(
+            this,
+            "package=${sbn.packageName}; ${extracted.diagnosticSummary()}; " +
+                "senderFound=${result.senderFound}; subjectPrefixFound=${result.subjectPrefixFound}; " +
+                "alarmTriggered=${result.matched}"
+        )
+        if (!result.matched) return
 
         val now = System.currentTimeMillis()
-        val fingerprint = sbn.key + "|" + candidates.joinToString("|").hashCode()
-        val previous = recent[fingerprint]
-        if (previous != null && now - previous < DEDUPE_MS) return
-        recent[fingerprint] = now
-        recent.entries.removeAll { now - it.value > DEDUPE_MS * 4 }
+        val fingerprint = extracted.candidates.joinToString("|") { it.trim().lowercase() }.hashCode().toString()
+        synchronized(recent) {
+            val previous = recent[fingerprint]
+            if (previous != null && now - previous < DEDUPE_MS) {
+                EventLog.add(this, "Dublet/grupperet Gmail-notifikation ignoreret")
+                return
+            }
+            recent[fingerprint] = now
+            recent.entries.removeAll { now - it.value > DEDUPE_MS * 4 }
+        }
 
         startForegroundService(Intent(this, AlarmService::class.java).apply {
             action = AlarmService.ACTION_START
-            putExtra(AlarmService.EXTRA_REASON, "VIP-mail modtaget")
+            putExtra(AlarmService.EXTRA_REASON, "LILT assignment modtaget")
         })
     }
 
     companion object {
         private const val GMAIL_PACKAGE = "com.google.android.gm"
-        private const val DEDUPE_MS = 15_000L
+        private const val DEDUPE_MS = 60_000L
     }
 }

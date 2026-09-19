@@ -1,15 +1,15 @@
 # Gmail Catch
 
-Gmail Catch is a small Android alarm app for one purpose: wake the user when Gmail posts a notification from a configured VIP sender.
+Gmail Catch is a small Android alarm app for one purpose: wake the user when Gmail posts a matching LILT assignment notification.
 
 The app does **not** connect to Gmail, does not use Gmail OAuth, and does not read the mailbox. It listens locally to Android notifications from the official Gmail package (`com.google.android.gm`).
 
 ## v0.1 goal
 
-1. User enters a VIP sender email address or sender text.
+1. User configures a sender and, optionally, a subject prefix.
 2. User grants notification-listener access.
 3. Gmail Catch observes new Gmail notifications.
-4. If notification content matches the VIP sender, Gmail Catch starts a looping alarm.
+4. If notification content matches the sender and active subject-prefix rule, Gmail Catch starts a looping alarm.
 5. Alarm continues until the user presses STOP.
 6. A local event log records what happened without storing message bodies.
 

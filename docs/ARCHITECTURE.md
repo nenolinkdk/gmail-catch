@@ -41,7 +41,7 @@ Android `NotificationListenerService`. Receives notification callbacks from the 
 Converts Android notification extras into a normalized collection of candidate strings. Gmail notification formats can vary, so extraction must not depend on a single `title` field.
 
 ### `VipMatcher`
-Pure matching logic. v0.1 uses case-insensitive substring matching against the configured sender string. Keeping this logic independent makes it easy to unit-test and improve after observing real Gmail notifications.
+Pure matching logic. v0.1 uses a case-insensitive sender match plus an optional case-insensitive subject-prefix match. Sender and subject may be found in different Gmail notification-extra fields. Keeping this logic independent makes it easy to unit-test and improve after observing real Gmail notifications.
 
 ### `AlarmService`
 Foreground service responsible for the alarm lifecycle. Owns audio and vibration resources and releases them on STOP.
