@@ -11,18 +11,17 @@ object VipMatcher {
         sender: String,
         subjectPrefix: String,
         subjectRequired: Boolean,
-        candidates: Collection<String>
+        senderCandidates: Collection<String>,
+        subjectCandidates: Collection<String> = senderCandidates
     ): Result {
         val senderNeedle = sender.trim().lowercase()
         val prefixNeedle = subjectPrefix.trim().lowercase()
-        val normalized = candidates.flatMap { candidate ->
-            candidate.lineSequence().map(String::trim).filter(String::isNotEmpty).toList()
-        }.map(String::lowercase)
-
-        val senderFound = senderNeedle.isNotEmpty() && normalized.any { it.contains(senderNeedle) }
-        val subjectFound = prefixNeedle.isNotEmpty() && normalized.any { value ->
-            val prefixIndex = value.indexOf(prefixNeedle)
-            prefixIndex == 0 || (prefixIndex > 0 && value.substring(0, prefixIndex).contains(senderNeedle))
+        val senderFound = senderNeedle.isNotEmpty() && senderCandidates.any {
+            it.trim().lowercase() == senderNeedle
+        }
+        val subjectFound = prefixNeedle.isNotEmpty() && subjectCandidates.any { value ->
+            value.trimStart().dropWhile { !it.isLetterOrDigit() }.trimStart()
+                .lowercase().startsWith(prefixNeedle)
         }
         val validSubjectRule = !subjectRequired || (prefixNeedle.isNotEmpty() && subjectFound)
         return Result(senderFound, subjectFound, senderFound && validSubjectRule)

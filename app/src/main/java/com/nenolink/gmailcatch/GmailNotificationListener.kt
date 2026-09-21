@@ -18,7 +18,11 @@ class GmailNotificationListener : NotificationListenerService() {
             settings.vipSender,
             settings.subjectPrefix,
             settings.subjectRequired,
-            extracted.candidates
+            extracted.fields.getOrDefault("title", emptyList()) +
+                extracted.fields.getOrDefault("titleBig", emptyList()),
+            extracted.fields.getOrDefault("text", emptyList()) +
+                extracted.fields.getOrDefault("bigText", emptyList()) +
+                extracted.fields.getOrDefault("textLines", emptyList())
         )
         EventLog.add(
             this,

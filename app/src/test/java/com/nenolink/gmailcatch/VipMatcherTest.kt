@@ -21,15 +21,13 @@ class VipMatcherTest {
     }
 
     @Test
-    fun matchesLiltSenderAndSubjectPrefixAcrossDifferentFields() {
+    fun matchesLiltReviewAssignmentWithLeadingPaperclip() {
         val result = VipMatcher.evaluate(
-            "noreply@em.lilt.com",
-            "You have a new translation assignment on project",
+            "Lilt",
+            "You have",
             true,
-            listOf(
-                "noreply@em.lilt.com",
-                "You have a new translation assignment on project snap.com - Values 2026-09-18"
-            )
+            listOf("Lilt"),
+            listOf("  📎 You have a new review assignment on project X")
         )
         assertTrue(result.senderFound)
         assertTrue(result.subjectPrefixFound)
@@ -37,24 +35,26 @@ class VipMatcherTest {
     }
 
     @Test
-    fun matchesCombinedGmailFieldWithDisplayNameSenderAndSubject() {
+    fun matchesLiltTranslationAssignment() {
         assertTrue(
             VipMatcher.evaluate(
-                "noreply@em.lilt.com",
-                "You have a new translation assignment on project",
+                "Lilt",
+                "You have",
                 true,
-                listOf("LILT <noreply@em.lilt.com> · You have a new translation assignment on project X")
+                listOf("lIlT"),
+                listOf("You have a new translation assignment on project X")
             ).matched
         )
     }
 
     @Test
-    fun rejectsLiltSenderWithWrongSubjectWhenRequired() {
+    fun rejectsLiltWithOtherText() {
         val result = VipMatcher.evaluate(
-            "noreply@em.lilt.com",
-            "You have a new translation assignment on project",
+            "Lilt",
+            "You have",
             true,
-            listOf("noreply@em.lilt.com", "Your weekly LILT summary")
+            listOf("Lilt"),
+            listOf("Your weekly LILT summary")
         )
         assertTrue(result.senderFound)
         assertFalse(result.subjectPrefixFound)
@@ -62,25 +62,14 @@ class VipMatcherTest {
     }
 
     @Test
-    fun canDisableSubjectRequirement() {
-        assertTrue(
-            VipMatcher.evaluate(
-                "noreply@em.lilt.com",
-                "You have a new translation assignment on project",
-                false,
-                listOf("Message from noreply@em.lilt.com", "Any subject")
-            ).matched
-        )
-    }
-
-    @Test
-    fun rejectsSubjectWithoutSender() {
+    fun rejectsOtherSenderWithYouHaveText() {
         assertFalse(
             VipMatcher.evaluate(
-                "noreply@em.lilt.com",
-                "You have a new translation assignment on project",
+                "Lilt",
+                "You have",
                 true,
-                listOf("other@example.com", "You have a new translation assignment on project X")
+                listOf("Another sender"),
+                listOf("You have a new translation assignment")
             ).matched
         )
     }

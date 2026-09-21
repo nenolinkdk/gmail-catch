@@ -45,7 +45,7 @@ class MainActivity : Activity() {
             setOnCheckedChangeListener { _, checked -> settingsRepo.enabled = checked }
         }
         sender = EditText(this).apply {
-            hint = "Afsender, fx noreply@em.lilt.com"
+            hint = "Afsendernavn, fx Lilt"
             setText(settingsRepo.vipSender)
             inputType = android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
         }
